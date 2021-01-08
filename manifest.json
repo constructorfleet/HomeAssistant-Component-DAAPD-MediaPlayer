@@ -1,0 +1,10 @@
+{
+  "domain": "daapd",
+  "name": "Forked DAAPD Media Players",
+  "documentation": "https://github.com/constructorfleet/HomeAssistant-Component-BetterPlex",
+  "requirements": ["mpg123==0.4"],
+  "dependencies": [],
+  "codeowners": [
+    "@teagan42"
+  ]
+}
