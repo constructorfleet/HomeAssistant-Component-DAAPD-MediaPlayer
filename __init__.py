@@ -1,1 +1,1 @@
-"""The forked-daapd component."""
+"""The forked-daapd media-player component."""

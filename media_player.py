@@ -1,5 +1,5 @@
 """
-Support for interfacing to forked-daapd API.
+MediaPlayer based off Forked-DAAPD backend
 
 """
 import logging
@@ -140,6 +140,7 @@ class ForkedDaapd:
     def play_music(self, media_id, wholePath=True):
         path = media_id.split('/')
         filename = path[len(path) - 1]
+
         os.system("mpg123 --encoding s16 --rate 44100 --stereo --stdout /config/tts/" + filename + " > /config/forked-daapd/music/HomeAssistantAnnounce")
         return {}
 
