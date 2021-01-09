@@ -3,25 +3,35 @@ MediaPlayer based off Forked-DAAPD backend
 
 """
 import logging
-
-import requests
-import voluptuous as vol
 import os
 
+import homeassistant.helpers.config_validation as cv
+import requests
+import voluptuous as vol
 from homeassistant.components.media_player import (
-    MediaPlayerDevice, PLATFORM_SCHEMA)
+    MediaPlayerEntity,
+    PLATFORM_SCHEMA)
 from homeassistant.components.media_player.const import (
-    MEDIA_TYPE_MUSIC, MEDIA_TYPE_PLAYLIST, SUPPORT_NEXT_TRACK,
-    SUPPORT_PAUSE, SUPPORT_PLAY, SUPPORT_PLAY_MEDIA, SUPPORT_PREVIOUS_TRACK,
-    SUPPORT_SEEK, SUPPORT_TURN_OFF, SUPPORT_TURN_ON, SUPPORT_VOLUME_MUTE,
+    MEDIA_TYPE_MUSIC,
+    MEDIA_TYPE_PLAYLIST,
+    SUPPORT_PLAY_MEDIA,
+    SUPPORT_TURN_OFF,
+    SUPPORT_TURN_ON,
+    SUPPORT_VOLUME_MUTE,
     SUPPORT_VOLUME_SET)
 from homeassistant.const import (
-    CONF_HOST, CONF_NAME, CONF_PORT, CONF_SSL, STATE_IDLE, STATE_OFF, STATE_ON,
-    STATE_PAUSED, STATE_PLAYING)
-import homeassistant.helpers.config_validation as cv
+    CONF_HOST,
+    CONF_NAME,
+    CONF_PORT,
+    CONF_SSL,
+    STATE_IDLE,
+    STATE_OFF,
+    STATE_ON,
+    STATE_PAUSED,
+    STATE_PLAYING)
 
-#import mpg123
-#from mpg123 import Mpg123
+# import mpg123
+# from mpg123 import Mpg123
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -31,7 +41,7 @@ DEFAULT_SSL = False
 DEFAULT_TIMEOUT = 10
 DOMAIN = 'daapd'
 
-#SUPPORT_FORKEDDAAPD = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | \
+# SUPPORT_FORKEDDAAPD = SUPPORT_PAUSE | SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | \
 #    SUPPORT_PREVIOUS_TRACK | SUPPORT_NEXT_TRACK | SUPPORT_SEEK | \
 #    SUPPORT_PLAY_MEDIA | SUPPORT_PLAY | SUPPORT_TURN_OFF
 SUPPORT_FORKEDDAAPD = SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | \
@@ -40,11 +50,11 @@ SUPPORT_FORKEDDAAPD = SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | \
 SUPPORT_AIRPLAY = SUPPORT_VOLUME_SET | SUPPORT_VOLUME_MUTE | SUPPORT_TURN_ON | SUPPORT_TURN_OFF
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Required(CONF_HOST): cv.string,
-    vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
-    vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
-    vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean,
-})
+        vol.Required(CONF_HOST): cv.string,
+        vol.Optional(CONF_NAME, default=DEFAULT_NAME): cv.string,
+        vol.Optional(CONF_PORT, default=DEFAULT_PORT): cv.port,
+        vol.Optional(CONF_SSL, default=DEFAULT_SSL): cv.boolean,
+        })
 
 
 class ForkedDaapd:
@@ -88,9 +98,13 @@ class ForkedDaapd:
             except:
                 return {}
         except requests.exceptions.HTTPError:
-            return {'player_state': 'error'}
+            return {
+                    'player_state': 'error'
+                    }
         except requests.exceptions.RequestException:
-            return {'player_state': 'offline'}
+            return {
+                    'player_state': 'offline'
+                    }
 
     def _command(self, named_command):
         """Make a request for a controlling command."""
@@ -100,7 +114,7 @@ class ForkedDaapd:
         """Return the current state."""
         return self._request('GET', '/api/player')
 
-    def queue(self, item_id = None):
+    def queue(self, item_id=None):
         if item_id is None:
             return self._request('GET', '/api/queue')
         else:
@@ -141,7 +155,9 @@ class ForkedDaapd:
         path = media_id.split('/')
         filename = path[len(path) - 1]
 
-        os.system("mpg123 --encoding s16 --rate 44100 --stereo --stdout /config/tts/" + filename + " > /config/daapd_pipelines/HomeAssistantAnnounce")
+        os.system(
+            "mpg123 --encoding s16 --rate 44100 --stereo --stdout /config/tts/" + filename + " > "
+                                                                                             "/config/daapd_pipelines/HomeAssistantAnnounce")
         return {}
 
     def play_playlist(self, playlist_id_or_name):
@@ -174,29 +190,33 @@ class ForkedDaapd:
         """Toggle airplay device on or off, id, toggle True or False."""
         _LOGGER.debug("Toggle id: %s, bool: %s", device_id, str(toggle))
         path = '/api/outputs/' + device_id
-        return self._request('PUT', path, {'selected': toggle})
+        return self._request('PUT', path, {
+                'selected': toggle
+                })
 
     def set_volume_airplay_device(self, device_id, level):
         """Set volume, returns current state of device, id,level 0-100."""
         path = '/api/outputs/' + device_id
-        return self._request('PUT', path, {'volume': int(level *100)})
+        return self._request('PUT', path, {
+                'volume': int(level * 100)
+                })
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the forked-daapd platform."""
     add_entities([
-        ForkedDaapdDevice(
-            config.get(CONF_NAME),
-            config.get(CONF_HOST),
-            config.get(CONF_PORT),
-            config.get(CONF_SSL),
+            ForkedDaapdDevice(
+                    config.get(CONF_NAME),
+                    config.get(CONF_HOST),
+                    config.get(CONF_PORT),
+                    config.get(CONF_SSL),
 
-            add_entities
-        )
-    ])
+                    add_entities
+                    )
+            ])
 
 
-class ForkedDaapdDevice(MediaPlayerDevice):
+class ForkedDaapdDevice(MediaPlayerEntity):
     """Representation of a forked-daapd API instance."""
 
     def __init__(self, name, host, port, use_ssl, add_entities):
@@ -230,10 +250,10 @@ class ForkedDaapdDevice(MediaPlayerDevice):
 
         self.player_state = state_hash.get('state', None)
 
-        self.current_volume = float(state_hash.get('volume', 0) /100)
+        self.current_volume = float(state_hash.get('volume', 0) / 100)
         self.muted = (self.current_volume == 0)
         self.current_playlist = None
-        current_item_id = state_hash.get('item_id',0)
+        current_item_id = state_hash.get('item_id', 0)
         if current_item_id > 0:
             queue_item = self.client.queue(current_item_id)
             if queue_item.get('count', 0) > 0:
@@ -320,12 +340,13 @@ class ForkedDaapdDevice(MediaPlayerDevice):
     def media_image_url(self):
         """Image url of current playing media."""
         if self.player_state in (STATE_PLAYING, STATE_IDLE, STATE_PAUSED) and \
-           self.current_title is not None:
+                self.current_title is not None:
             return self.client.artwork_url() + '?id=' + self.content_id
 
         return ''
-#        return 'https://cloud.githubusercontent.com/assets/260/9829355' \
-#            '/33fab972-58cf-11e5-8ea2-2ca74bdaae40.png'
+
+    #        return 'https://cloud.githubusercontent.com/assets/260/9829355' \
+    #            '/33fab972-58cf-11e5-8ea2-2ca74bdaae40.png'
 
     @property
     def media_title(self):
@@ -399,7 +420,7 @@ class ForkedDaapdDevice(MediaPlayerDevice):
         self.update_state(response)
 
 
-class AirPlayDevice(MediaPlayerDevice):
+class AirPlayDevice(MediaPlayerEntity):
     """Representation an AirPlay device via a forked-daapd API instance."""
 
     def __init__(self, device_id, client):
@@ -481,14 +502,18 @@ class AirPlayDevice(MediaPlayerDevice):
 
     def turn_on(self):
         """Select AirPlay."""
-        self.update_state({"selected": True})
+        self.update_state({
+                                  "selected": True
+                                  })
         self.schedule_update_ha_state()
         response = self.client.toggle_airplay_device(self._id, True)
         self.update_state(response)
 
     def turn_off(self):
         """Deselect AirPlay."""
-        self.update_state({"selected": False})
+        self.update_state({
+                                  "selected": False
+                                  })
         self.schedule_update_ha_state()
         response = self.client.toggle_airplay_device(self._id, False)
         self.update_state(response)
