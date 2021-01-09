@@ -156,7 +156,7 @@ class ForkedDaapd:
         filename = path[len(path) - 1]
 
         os.system(
-            "mpg123 --encoding s16 --rate 44100 --stereo --stdout /config/tts/" + filename + " > "
+            "mpg123 --encoding s16 --rate 44100 --stereo --stdout /config/www/tts/" + filename + " > "
                                                                                              "/config/daapd_pipelines/HomeAssistantAnnounce")
         return {}
 
